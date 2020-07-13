@@ -12,13 +12,13 @@ At first, I didn't understand how the state of the transmitter was communicated 
 
 Turns out we've thought up some really, really clever ways to communicate information. Transmitters and receivers for RC control make use of a concept called Pulse-Width Modulation (PWM) that allows the transmitter to communicate data about its state using digital pulses of a certain duration. Each of these signals is transmitted via a single channel as discussed above. Reading the length of these pulses gives us the information about the position of the control: when the stick is pushed all the way to the left the duration of its pulse is 1ms; pushed to the right it's 2ms; in the middle it's 1.5ms. (these will be measured in microseconds, so 1000us = stick left, 1500us = stick middle, 2000us = stick right)
 
-<img src="pictures\PulseDuration.png" style="zoom:50%; float:left;" />
+<img src="pictures\PulseDuration.PNG" style="zoom:50%; float:left;" />
 
 So, calling digitalRead() on the pin was wrong, and I somehow needed to measure the pulse length of four signals... I googled it and found [this](https://ryanboland.com/blog/reading-rc-receiver-values), which told me I needed to find a way to listen to state changes on each I/O pin corresponding to a channel from the receiver. Arduino provides an `attachInterrupt()` method, which listens to the state of a pin and triggers a callback based on that; however, it's only implemented for pins 2 & 3. I needed four channels, which meant 4 pins. More Google and I found resource (1), which showed me how to interact directly with the Atmega328p microcontroller on the Arduino board.
 
-<img src="pictures\pcicr.jpg" style="zoom:50%; float:left;" /> 
+<img src="pictures\pcicr.JPG" style="zoom:50%; float:left;" /> 
 
-<img src="pictures\pcmsk0.jpg" style="zoom:50%; float:left;" />
+<img src="pictures\pcmsk0.JPG" style="zoom:50%; float:left;" />
 
 By setting the PCICR within the Atmega (pin change interrupt control register) to 0b00000001, it allows external interrupts on a range of registers (PCINT0-PCINT7). Of interest to us are PCINT0-PCINT3, which are the registers corresponding to digital pins 8-11. To define which pins trigger an interrupt, we set PCMSK0 to 0x0F, which enables interrupts for state changes on registers PCINT0-PCINT3. Now, whenever the state of one of these pins is changed from high to low or vice versa, the microcontroller will trigger a software response called an Interrupt Service Routine (ISR) where I can run logic and do something useful, like read the state of a register! What I have at this point is a program that listens for state changes on I/O pins 8-11 and when that occurs, a function called `ISR(PCINT0_vect) {}` is called.  
 
