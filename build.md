@@ -12,7 +12,7 @@ At first, I didn't understand how the state of the transmitter was communicated 
 
 Turns out we've thought up some really, really clever ways to communicate information. Transmitters and receivers for RC control make use of a concept called Pulse-Width Modulation (PWM) that allows the transmitter to communicate data about its state using digital pulses of a certain duration. Each of these signals is transmitted via a single channel as discussed above. Reading the length of these pulses gives us the information about the position of the control: when the stick is pushed all the way to the left the duration of its pulse is 1ms; pushed to the right it's 2ms; in the middle it's 1.5ms. (these will be measured in microseconds, so 1000us = stick left, 1500us = stick middle, 2000us = stick right)
 
-![img](http://1.bp.blogspot.com/-2SY0iWgAWVk/TxRLqOU-HCI/AAAAAAAAAM8/APKCAG6e7GU/s1600/PulseDuration.PNG)
+<img src="pictures\PulseDuration.png" alt="image-20200713104311788" style="zoom:50%; float:left;" />
 
 So, calling digitalRead() on the pin was wrong, and I somehow needed to measure the pulse length of four signals... I googled it and found [this](https://ryanboland.com/blog/reading-rc-receiver-values), which told me I needed to find a way to listen to state changes on each I/O pin corresponding to a channel from the receiver. Arduino provides an `attachInterrupt()` method, which listens to the state of a pin and triggers a callback based on that; however, it's only implemented for pins 2 & 3. I needed four channels, which meant 4 pins. More Google and I found resource (1), which showed me how to interact directly with the Atmega328p microcontroller on the Arduino board.
 
