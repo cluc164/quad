@@ -22,11 +22,11 @@ We want to measure the time from when the signal goes high to when it goes back 
 
 Excited that I'd correctly obtained data from the transmitter, I copy and pasted the code and edited it to look at the data from all 4 channels and rather than getting nice, clean numbers between 1000 and 2000, I got this data where each column corresponds to a channel's input. 
 
- <img src="C:\Users\chris\OneDrive\Documents\GitHub\quad\pictures\unstable.png" alt="image-20200713104311788" style="zoom:50%;" />
+ <img src="pictures\unstable.png" alt="image-20200713104311788" style="zoom:50%;" />
 
 Looking into this, you can notice that some columns do actually get nice data once and awhile, but it's inconsistent. I realized that in some cases, it's entirely possible that one pin's interrupt could occur during the time in which another pin has already been high for a certain amount of time. Blindly recording the time works for a single channel when we can guarantee the ISR is triggered on a rising or falling edge; this will not work when there are 4 pins that can each individually trigger the ISR at different times. To fix this, simply add in a state machine that verifies whether or not we have already detected the rising edge for a specific pulse. This ensures that only the rising/falling edge is detected for each channel, and the pulse lengths are recorded properly. After adding in these checks for each channel, the data columns are much nicer looking, albeit minutely noisy. 
 
-<img src="C:\Users\chris\OneDrive\Documents\GitHub\quad\pictures\stable.png" alt="image-20200713110050989" style="zoom:50%; float: left" />
+<img src="pictures\stable.png" alt="image-20200713110050989" style="zoom:50%; float: left" />
 
 At this point, I have stable data that corresponds to the position of each control stick on the transmitter. All I will do is absolutely ensure that the values are within a certain range via mapping.
 
