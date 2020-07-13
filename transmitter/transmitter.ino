@@ -9,7 +9,7 @@ int ch1_state, ch2_state, ch3_state, ch4_state;
 
 void setup() {
   DDRB |= 0b00000000; // pins 8-11 set to input
-  PORTB |= 0b00001111; // pins 8-11 use pullup resistors
+  PORTB |= 0b00001111; // use pullup resistors to ensure valid state on pins 8-11
   
   // https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328 
   PCICR |= (1 << PCIE0);    // set PCIE0 to enable PCMSK0 scan
