@@ -4,13 +4,13 @@ I saw a video on how quadcopters worked and it inspired me to really learn the s
 
 I wanted a challenge, but I also didn't want to be completely in over my head. Luckily, people have built quadcopters before and I was able to find a guy on YouTube who had built one and provided both source code and a schematic! But I didn't want to be boring and just yoink someone else's code for a project like this without understanding it... So I yoinked his schematic, bought all the parts, and began learning how to program flight control software. 
 
-## Transmitter
+### Transmitter
 
 For some reason, I figured that starting with the thing that allowed me to actually control the quadcopter was a good idea! I bought an FS-T6 transmitter/receiver combo, and from reading the manual I knew that controls were linked with certain channels; e.g. the right stick's x-axis (roll) corresponded with channel 1 on the receiver. I connected channels 1-4 to the Arduino's I/O pins 8-11 via jumper cables, and set to work.
 
 At first, I didn't understand how the state of the transmitter was communicated at all, so I just tried to set the pins that I had connected to the receiver to digital input, and from there simply digitalRead() the values; easy, right? Well, not really. 
 
-Turns out we've thought up some really, really clever ways to communicate information. Transmitters and receivers for RC control make use of a concept called Pulse-Width Modulation (PWM) that allows the transmitter to communicate data about its state using digital pulses of a certain duration. Each of these signals is transmitted via a single channel as discussed above. Reading the length of these pulses gives us the information about the position of the control: when the stick is pushed all the way to the left the duration of its pulse is 1ms; pushed to the right it's 2ms; in the middle it's 1.5ms. (these will be measured in microseconds, so 1000us = stick left, 1500us = stick middle, 2000us = stick right)
+Turns out we've thought up some really, really clever ways to communicate information. Transmitters and receivers for RC control make use of a concept called Pulse-Width Modulation (PWM) that allows the transmitter to communicate data about its state using digital pulses of a certain duration. Each of these signals is transmitted via a single channel as discussed above. Reading the length of these pulses gives us the information about the position of the control. These will be measured in microseconds, so 1000us pulse length = stick all the way to the left, 1500us = stick in the middle, 2000us = stick right.
 
 <img src="pictures\PulseDuration.PNG" style="zoom:50%; float:left;" />
 
@@ -28,11 +28,15 @@ Excited that I'd correctly obtained data from the transmitter, I copy and pasted
 
  <img src="pictures\unstable.png" style="zoom:50%;" />
 
-Looking into this, you can notice that some columns do actually get nice data once and awhile, but it's inconsistent. I realized that in some cases, it's entirely possible that one pin's interrupt could occur during the time in which another pin has already been high or low for a certain amount of time. Blindly recording the time works for a single channel when we can guarantee the ISR is triggered on a rising or falling edge; this will not work when there are 4 pins that can each individually trigger the ISR at different times. Essentially, the time was being measured incorrectly because pin state changes were occurring at different times with no fail-safes to ensure we were actually measuring one pulse or another. To fix this, simply add in a state machine that verifies whether or not we have already detected the rising edge for a specific pulse. This ensures that only the rising/falling edge is detected for each channel, and the pulse lengths are recorded properly. After adding in these checks for each channel, the data columns are much nicer looking, albeit minutely noisy. 
+Looking into this, you can notice that some columns do actually get nice data once and awhile, but it's inconsistent. I realized that in some cases, it's entirely possible that one pin's interrupt could occur during the time in which another pin has already been high or low for a certain amount of time. Blindly recording the time works for a single channel when we can guarantee the ISR is triggered on a rising or falling edge; this will not work when there are 4 pins that can each individually trigger the ISR at different times. Essentially, the time was being measured incorrectly because pin state changes were occurring at different times with no fail-safes to ensure we were properly measuring one pulse or another. To fix this, simply add in a state machine that verifies whether or not we have already detected the rising edge for a specific pulse. This ensures that only the rising/falling edge is detected for each channel, and the pulse lengths are recorded properly. After adding in these checks for each channel, the data columns are much nicer looking, albeit minutely noisy. 
 
 <img src="pictures\stable.png" style="zoom:50%; float: left" />
 
 At this point, I have stable data that corresponds to the position of each control stick on the transmitter. All I will do is absolutely ensure that the values are within a certain range via mapping.
+
+### Motors
+
+For my quadcopter, I bought 1000KV brushless motors with 30A electronic speed controllers (ESCs). With an 11.1V battery, this meant my motors could spin at up to roughly 11,100 RPM... which is pretty fast! The motor speed is controlled by pulses from the ESC, which are then in turn controlled by a PWM signal from an input pin.
 
 # Resources
 
@@ -45,3 +49,5 @@ At this point, I have stable data that corresponds to the position of each contr
 (3) [FS-T6 Manual](https://fccid.io/N4ZFLYSKYT6/User-Manual/User-manual-1740934.pdf)
 
 (4) [Information about PWM](https://oscarliang.com/pwm-ppm-difference-conversion)
+
+(5) [ESC configuration sheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=451)

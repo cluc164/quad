@@ -33,14 +33,16 @@ void loop() {
 
 ISR(PCINT0_vect) {
   curr_time = micros();
+  // PINB is an address which maps to the input value of PORTB, whose bits correspond to the digital state of I/O pins
+  // PINB bits 0-3 map to pins 8-11, respectively 
   
   // CH1
-  if (PINB & B00000001) { 
+  if (PINB & B00000001) {
     if (ch1_state == 0) { // only start the timer at the rising edge
       ch1_state = 1;
       ch1_time = curr_time;
     }
-  } else if (ch1_state == 1) { // only record the time at the falling edge
+  } else if (ch1_state == 1) { // only record the elapsed time at the falling edge
     ch1_state = 0;
     ch1 = curr_time - ch1_time;
   }
@@ -51,7 +53,7 @@ ISR(PCINT0_vect) {
       ch2_state = 1;
       ch2_time = curr_time;
     }
-  } else if (ch2_state == 1) { // only record the time at the falling edge
+  } else if (ch2_state == 1) { // only record the elapsed time at the falling edge
     ch2_state = 0;
     ch2 = curr_time - ch2_time;
   }
@@ -62,7 +64,7 @@ ISR(PCINT0_vect) {
       ch3_state = 1;
       ch3_time = curr_time;
     }
-  } else if (ch3_state == 1) { // only record the time at the falling edge
+  } else if (ch3_state == 1) { // only record the elapsed time at the falling edge
     ch3_state = 0;
     ch3 = curr_time - ch3_time;
   }
@@ -73,7 +75,7 @@ ISR(PCINT0_vect) {
       ch4_state = 1;
       ch4_time = curr_time;
     }
-  } else if (ch4_state == 1) { // only record the time at the falling edge
+  } else if (ch4_state == 1) { // only record the elapsed time at the falling edge
     ch4_state = 0;
     ch4 = curr_time - ch4_time;
   }
