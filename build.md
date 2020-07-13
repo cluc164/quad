@@ -38,6 +38,10 @@ At this point, I have stable data that corresponds to the position of each contr
 
 For my quadcopter, I bought 1000KV brushless motors with 30A electronic speed controllers (ESCs). With an 11.1V battery, this meant my motors could spin at up to roughly 11,100 RPM... which is pretty fast! The motor speed is controlled by pulses from the ESC, which are then in turn controlled by a PWM signal from an input pin.
 
+There seemed to be a couple ways I could do this; use the provided Servo library and just send it the output signal, or actually create the pulses myself just like I'd decoded them from the transmitter. The first option was easiest just to get it actually working so I did that, and had a spinning motor up and running within about 10 minutes. The problem is that this required me to write to the motors sequentially; I couldn't trigger all 4 motors at exactly the same moment, I'd have to write to one, then the next... That's not exactly desirable, so I started to look into using port manipulation to send all four motor pulses in the same way.
+
+This requires a bit of thought, and I'm currently working on it.
+
 # Resources
 
 (1) [External Interrupts on Arduino](https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328)
