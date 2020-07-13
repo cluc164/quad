@@ -1,26 +1,29 @@
-unsigned long ch3_time, curr_time, motor_timer;
+unsigned long ch3_time, curr_time;
 unsigned long ch3;
 int ch3_state;
 
-int throttle;
+#include <Servo.h>
+
+Servo ESC;
 
 void setup() {
   DDRB |= 0b00000000; // pins 8-11 set to input
   PORTB |= 0b00001111; // use pullup resistors to ensure valid state on pins 8-11
 
-  DDRD |= 0b00010000; // pin 4 set to output
+  // DDRD |= 0b00010000; // pin 4 used as output
   
   
   // https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328 
   PCICR |= (1 << PCIE0);    // set PCIE0 to enable PCMSK0 scan
   PCMSK0 |= (1 << PCINT2);  // trigger ISR on PCINT2 (digital pin 10) state change
   
+  ESC.attach(4,1000,2000);
   Serial.begin(9600);
 }
 
 void loop() {
-  throttle = ch3;
-
+  Serial.println(ch3);
+  ESC.write(ch3);
 }
 
 ISR(PCINT0_vect) {
