@@ -42,7 +42,7 @@ There seemed to be a couple ways I could do this; use the provided Servo library
 
 Now that I know how to read/write from registers representing I/O pins, it's much easier to wrap my head around what I needed to do, and I started by drawing a picture. Essentially I needed to reverse what I'd done when reading in the PWM signal from the transmitter: send out a digital signal that's high for a certain duration of time to each pin corresponding to a motor. To accomplish this I only really required three things: a pulse length (which I get from the signal from the transmitter's throttle stick), a start time, and a connection point (I connected a single motor to pin 4, which is PORTD register 4).
 
-<img src="pictures\motor_pulse.JPG" style="zoom:10%; float: left" />
+<img src="pictures\motor_pulse.jpg" style="zoom:10%; float: left" />
 
 All I did was set PORTD4 high and then enter into a loop. Inside this loop, I checked the current time against the start time added to the pulse length; if the current time is less than that value, the pulse should remain high. However, as soon as the current time is equal to or greater than the saved end time, we should set the pulse to low, which allows the loop to exit. This is scalable to all four motor outputs, as four if-statements checking time within a loop is not costly at all, and allows us to relay the PWM signal from the transmitter into the motors.
 
