@@ -1,29 +1,50 @@
-unsigned long ch3_time, curr_time;
+unsigned long ch3_time, curr_time, motor_start, motor_end, motor_current_time;
 unsigned long ch3;
 int ch3_state;
-
-#include <Servo.h>
-
-Servo ESC;
+int throttle_pulse;
 
 void setup() {
+  DDRD |= 0b00010000; // pin 4 used as output
+  
   DDRB |= 0b00000000; // pins 8-11 set to input
   PORTB |= 0b00001111; // use pullup resistors to ensure valid state on pins 8-11
 
-  // DDRD |= 0b00010000; // pin 4 used as output
-  
-  
   // https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328 
   PCICR |= (1 << PCIE0);    // set PCIE0 to enable PCMSK0 scan
   PCMSK0 |= (1 << PCINT2);  // trigger ISR on PCINT2 (digital pin 10) state change
   
-  ESC.attach(4,1000,2000);
   Serial.begin(9600);
+  while( ch3 < 1000) {
+    Serial.println("waiting for transmitter to turn on");
+  }
 }
 
 void loop() {
-  Serial.println(ch3);
-  ESC.write(ch3);
+  // ensure that the throttle pulse is between 1000-1900, and don't use ch3 as it's being written to by the ISR
+  throttle_pulse = ch3;
+  if (throttle_pulse < 1000) {
+    throttle_pulse = 1000;
+  } else if (throttle_pulse > 1900) {
+    throttle_pulse = 1900;
+  }
+
+  // figure out the start and end times of the pulse
+  motor_start = micros();
+  motor_end = motor_start + throttle_pulse;
+
+  // Set pin 4 to HIGH to start the pulse
+  PORTD |= 0b00010000;
+
+  // PORTD <= 15 means the pulse is done sending (pulsating? ew) as the 4th bit has been set to LOW
+  while (PORTD > 15) {
+    motor_current_time = micros();
+
+    // Compare the current time against the time when we know the pulse should end
+    if (motor_current_time >= motor_end) {
+      // set pin 4 to LOW to end the pulse
+      PORTD &= 0b00000000; 
+    }
+  }
 }
 
 ISR(PCINT0_vect) {
