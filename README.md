@@ -4,7 +4,7 @@ I saw a video on how quadcopters worked and it inspired me to really learn the s
 
 I wanted a challenge, but I also didn't want to be completely in over my head. Luckily, people have built quadcopters before and I was able to find a guy on YouTube who had built one and provided both source code and a schematic! But I didn't want to be boring and just yoink someone else's code for a project like this without understanding it... So I yoinked his schematic, bought all the parts, and began learning how to program flight control software. 
 
-### Transmitter
+## Transmitter
 
 For some reason, I figured that starting with the thing that allowed me to actually control the quadcopter was a good idea! I bought an FS-T6 transmitter/receiver combo, and from reading the manual I knew that controls were linked with certain channels; e.g. the right stick's x-axis (roll) corresponded with channel 1 on the receiver. I connected channels 1-4 to the Arduino's I/O pins 8-11 via jumper cables, and set to work.
 
@@ -34,7 +34,7 @@ Looking into this, you can notice that some columns do actually get nice data on
 
 At this point, I have stable data that corresponds to the position of each control stick on the transmitter. All I will do is absolutely ensure that the values are within a certain range via mapping.
 
-### Motors
+## Motors
 
 For my quadcopter, I bought 1000KV brushless motors with 30A electronic speed controllers (ESCs). With an 11.1V battery, this meant my motors could spin at up to roughly 11,000 RPM... which is pretty fast! The motor speed is controlled by pulses from the ESC, which are then in turn controlled by a PWM signal from an input pin.
 
@@ -46,7 +46,23 @@ Now that I know how to read/write from registers representing I/O pins, it's muc
 
 All I did was set PORTD4 high and then enter into a loop. Inside this loop, I checked the current time against the start time added to the pulse length; if the current time is less than that value, the pulse should remain high. However, as soon as the current time is equal to or greater than the saved end time, we should set the pulse to low, which allows the loop to exit. This is scalable to all four motor outputs, as four if-statements checking time within a loop is not costly at all, and allows us to relay the PWM signal from the transmitter into the motors.
 
+## Frame
 
+So, I forgot to take pictures toward the beginning of the process. But basically, I bought a DJI F450 frame and needed to solder things together and find a way to hold the battery, gyro, controller, and receiver. 
+
+ ![](C:\Users\chris\OneDrive\Documents\GitHub\quad\pictures\frame.jpg)
+
+I soldered the ESCs to the frame directly, and also wired the digital ground onto the frame. I also made an LED with a resistor that is plugged into the controller for status indication. Additionally, to power the flight controller and measure the battery voltage, I made a voltage divider and a 2-pin power connection with a diode as follows (don't worry, I isolated everything with electrical tape after I took this picture, heat-shrink is my next purchase):
+
+<img src="C:\Users\chris\OneDrive\Documents\GitHub\quad\pictures\power.jpg" style="zoom: 25%; float: left;" />
+
+After I did this, I attached the ESC and motor connections to bullet connectors, checked all the pins and connections on the frame with a multimeter, and hooked up the Arduino with the LED to the battery connection, and plugged in the battery. The LED started blinking, the ESCs started beeping, and as soon as I turned on the transmitter the LED went solid and I turned up the throttle... all 4 motors worked while attached to the frame! After that, I calibrated the ESCs throttle input range to match the output range of the controller. At this point, I have a frame onto which I can mount my flight controller, motors, and other peripherals, and the ability to throttle the motors up and down via the transmitter.
+
+## Gyroscope + Accelerometer = IMU
+
+The gyroscope/accelerometer I bought (MPU-6050) communicates with a master device (such as a microcontroller) via I2C, a common serial protocol made for communicating with peripherals. Because it can measure angular momentum and acceleration across three axes for each of those respectively, the device provides me with an 6-degree-of-freedom inertial measurement unit (IMU) with which I can keep track of roll and pitch (and yaw, crudely).
+
+Communicating via serial means reading data one bit at a time; connecting the SCL and SDA pins on the MPU to the respective I/O ports on the Arduino allows me to do so via the Arduino Wire library! I2C protocol basically involves talking to a device, telling it where (what registers) you want to interact with it, and then reading or writing from it. Certain registers on the MPU correspond to outputs for its sensors, and the Wire library provides a way of reading a certain number of registers from the requested device (burst read). According to (7) the accelerometer and gyroscope data (16 bits for each axis) are divided up into 8-bit registers starting at 0x3B. The temperature sensor readout is also sandwiched in between the two, so we read 14 registers sequentially so as not to split up readings and save time, but simply ignore the temperature data. Now, we can read the raw data from the accelerometer and gyro's x, y, and z axes respectively!
 
 # Resources
 
@@ -54,10 +70,12 @@ All I did was set PORTD4 high and then enter into a loop. Inside this loop, I ch
 
 (2) [Atmega328p Documentation](http://ee-classes.usc.edu/ee459/library/documents/Atmel-42735-8-bit-AVR-Microcontroller-ATmega328-328P_Datasheet.pdf)
 
-(2) [Port Information](https://web.ics.purdue.edu/~jricha14/Port_Stuff/)
+(3) [Port Information](https://web.ics.purdue.edu/~jricha14/Port_Stuff/)
 
-(3) [FS-T6 Manual](https://fccid.io/N4ZFLYSKYT6/User-Manual/User-manual-1740934.pdf)
+(4) [FS-T6 Manual](https://fccid.io/N4ZFLYSKYT6/User-Manual/User-manual-1740934.pdf)
 
-(4) [Information about PWM](https://oscarliang.com/pwm-ppm-difference-conversion)
+(5) [Information about PWM](https://oscarliang.com/pwm-ppm-difference-conversion)
 
-(5) [ESC configuration sheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=451)
+(6) [ESC configuration sheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=451)
+
+(7) [MPU6050 Register Map](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf)
