@@ -64,6 +64,12 @@ The gyroscope/accelerometer I bought (MPU-6050) communicates with a master devic
 
 Communicating via serial means reading data one bit at a time; connecting the SCL and SDA pins on the MPU to the respective I/O ports on the Arduino allows me to do so via the Arduino Wire library! I2C protocol basically involves talking to a device, telling it where (what registers) you want to interact with it, and then reading or writing from it. Certain registers on the MPU correspond to outputs for its sensors, and the Wire library provides a way of reading a certain number of registers from the requested device (burst read). According to (7) the accelerometer and gyroscope data (16 bits for each axis) are divided up into 8-bit registers starting at 0x3B. The temperature sensor readout is also sandwiched in between the two, so we read 14 registers sequentially so as not to split up readings and save time, but simply ignore the temperature data. Now, we can read the raw data from the accelerometer and gyro's x, y, and z axes respectively!
 
+To really go on from here, I want to describe how I expect my quadcopter to function. When I provide the quad with a 'roll' command, I want it to roll until it reaches a certain angle, then stop. Once I release the stick, it should rotate back to level. In order to do this, I need to keep track of the current heading of the quadcopter and link that directly to motor outputs. Directly linking the motor control to the sticks is a possibility, but it makes it very difficult to fly in a stable manner. So essentially, I want to factor the roll, pitch, and yaw of the quad into the motor outputs received from the transmitter in order to help me fly.
+
+One easy and clean way to keep track of orientation is simply using the accelerometer; we know which direction is down and so we can easily isolate the roll and pitch axes. This is a very crude method for tracking two axes from the output of a 3-axis sensor, but it provides me with a good enough measurement to use for starting up PID motor control (for the moment)
+
+
+
 # Resources
 
 (1) [External Interrupts on Arduino](https://sites.google.com/site/qeewiki/books/avr-guide/external-interrupts-on-the-atmega328)
@@ -79,3 +85,7 @@ Communicating via serial means reading data one bit at a time; connecting the SC
 (6) [ESC configuration sheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=451)
 
 (7) [MPU6050 Register Map](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf)
+
+(8) [Madgwick Quaternion Filter](https://courses.cs.washington.edu/courses/cse466/15au/labs/l4/madgwick_internal_report.pdf)
+
+(9) 
