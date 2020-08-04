@@ -50,11 +50,11 @@ All I did was set PORTD4 high and then enter into a loop. Inside this loop, I ch
 
 So, I forgot to take pictures toward the beginning of the process. But basically, I bought a DJI F450 frame and needed to solder things together and find a way to hold the battery, gyro, controller, and receiver. 
 
- ![](C:\Users\chris\OneDrive\Documents\GitHub\quad\pictures\frame.jpg)
+<img src="pictures\frame.jpg" style="zoom: 25%; float: left;" />
 
 I soldered the ESCs to the frame directly, and also wired the digital ground onto the frame. I also made an LED with a resistor that is plugged into the controller for status indication. Additionally, to power the flight controller and measure the battery voltage, I made a voltage divider and a 2-pin power connection with a diode as follows (don't worry, I isolated everything with electrical tape after I took this picture, heat-shrink is my next purchase):
 
-<img src="C:\Users\chris\OneDrive\Documents\GitHub\quad\pictures\power.jpg" style="zoom: 25%; float: left;" />
+<img src="pictures\power.jpg" style="zoom: 25%; float: left;" />
 
 After I did this, I attached the ESC and motor connections to bullet connectors, checked all the pins and connections on the frame with a multimeter, and hooked up the Arduino with the LED to the battery connection, and plugged in the battery. The LED started blinking, the ESCs started beeping, and as soon as I turned on the transmitter the LED went solid and I turned up the throttle... all 4 motors worked while attached to the frame! After that, I calibrated the ESCs throttle input range to match the output range of the controller. At this point, I have a frame onto which I can mount my flight controller, motors, and other peripherals, and the ability to throttle the motors up and down via the transmitter.
 
@@ -85,7 +85,3 @@ One easy and clean way to keep track of orientation is simply using the accelero
 (6) [ESC configuration sheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=451)
 
 (7) [MPU6050 Register Map](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf)
-
-(8) [Madgwick Quaternion Filter](https://courses.cs.washington.edu/courses/cse466/15au/labs/l4/madgwick_internal_report.pdf)
-
-(9) 
