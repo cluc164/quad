@@ -1,6 +1,7 @@
 #include <Wire.h>
 
 const int MPU = 0x68;
+const int I2C_CLOCK = 250;
 
 const float ACCEL_SENSITIVITY = 8192.0;
 const float GYRO_SENSITIVITY = 65.5;
@@ -13,13 +14,16 @@ float acc[3];
 float gyro[3];
 float gyroCal[3];
 
-float roll, pitch, yaw;
+float roll_acc, pitch_acc, yaw;
+float roll, pitch;
+
+unsigned long timer;
 
 void setup() {
-  Serial.begin(9600);
-  Wire.setClock(250);
+  Serial.begin(115200);
   
   Wire.begin();
+  TWBR = 12;
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
   Wire.write(0x00);
@@ -37,15 +41,29 @@ void setup() {
   Wire.endTransmission(true);
   
   calibrate_gyro();
+  timer = micros();
 }
 
 void loop() {
   read_mpu_data();
-  roll = atan2(acc[1], acc[2]) * 180/M_PI;
-  pitch = atan2(-acc[0], sqrt(acc[1]*acc[1] + acc[2]*acc[2])) * 180/M_PI;
-  Serial.print(roll);
+  pitch += gyro[1] / I2C_CLOCK;
+  roll += gyro[0] / I2C_CLOCK;
+
+  pitch_acc = atan2(-acc[0], sqrt(acc[1]*acc[1] + acc[2]*acc[2])) * 180/M_PI;
+  roll_acc = atan2(acc[1], acc[2]) * 180/M_PI;
+  
+  pitch = pitch * 0.96 + pitch_acc * 0.04;
+  roll = roll * 0.96 + roll_acc * 0.04;
+  
+  if(micros() - timer > 4050)digitalWrite(12, HIGH);                   //Turn on the LED if the loop time exceeds 4050us.
+  
+  //All the information for controlling the motor's is available.
+  //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
+  while(micros() - timer < 4000); 
+  Serial.print(pitch);
   Serial.print("\t");
-  Serial.println(pitch);
+  Serial.println(roll);
+  timer = micros();
 }
 
 void read_mpu_data() {
