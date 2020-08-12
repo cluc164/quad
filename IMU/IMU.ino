@@ -1,7 +1,7 @@
 #include <Wire.h>
 
-const int MPU = 0x68;
-const int I2C_CLOCK = 250;
+const int MPU = 0x68; // address of the MPU-6050 that I2C uses to initiate communication
+const int I2C_CLOCK = 250; // I2C clock frequency, in hz
 
 const float ACCEL_SENSITIVITY = 8192.0;
 const float GYRO_SENSITIVITY = 65.5;
@@ -23,7 +23,7 @@ void setup() {
   Serial.begin(115200);
   
   Wire.begin();
-  TWBR = 12;
+  TWBR = 12; // Setting the clock to 250 hz
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
   Wire.write(0x00);
@@ -45,20 +45,24 @@ void setup() {
 }
 
 void loop() {
+  // Get data from the IMU
   read_mpu_data();
+  
+  // Track how many degrees the craft's roll and pitch has travelled since the last cycle
+  // (degrees / seconds) * (1 / (1 / seconds) ) = degrees
   pitch += gyro[1] / I2C_CLOCK;
   roll += gyro[0] / I2C_CLOCK;
-
+  
+  // Calculate roll and pitch using data from the accelerometer
   pitch_acc = atan2(-acc[0], sqrt(acc[1]*acc[1] + acc[2]*acc[2])) * 180/M_PI;
   roll_acc = atan2(acc[1], acc[2]) * 180/M_PI;
   
+  // Complementary filter combining gyro/accelerometer data
   pitch = pitch * 0.96 + pitch_acc * 0.04;
   roll = roll * 0.96 + roll_acc * 0.04;
   
-  if(micros() - timer > 4050)digitalWrite(12, HIGH);                   //Turn on the LED if the loop time exceeds 4050us.
-  
-  //All the information for controlling the motor's is available.
-  //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
+  // In order for our loop to properly track the travelled roll/pitch angles, we need to ensure that our loop take precisely 4000 microseconds. By doing this, we
+  // can use a fixed variable for our time step when using the gyro to find roll/pitch
   while(micros() - timer < 4000); 
   Serial.print(pitch);
   Serial.print("\t");
@@ -66,13 +70,15 @@ void loop() {
   timer = micros();
 }
 
+// Gets data from the MPU6050 and takes it from raw integer form, does the necessary unit transformations, and
+// processes it into floats to be used for calculations
 void read_mpu_data() {
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU);
   Wire.write(0x3B); // Start with register 0x3B (accelXOUT_H)
   Wire.endTransmission();
-  Wire.requestFrom(0x68, 14);
-  while (Wire.available() < 14);
-  accRaw[0] = (int16_t)(Wire.read() << 8 | Wire.read());
+  Wire.requestFrom(MPU, 14); // Request 14 bytes from the MPU, starting at register 0x3B
+  while (Wire.available() < 14); 
+  accRaw[0] = (int16_t)(Wire.read() << 8 | Wire.read()); 
   accRaw[1] = (int16_t)(Wire.read() << 8 | Wire.read());
   accRaw[2] = (int16_t)(Wire.read() << 8 | Wire.read());
   temp = (Wire.read() << 8 | Wire.read());
