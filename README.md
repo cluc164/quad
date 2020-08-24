@@ -68,7 +68,17 @@ To really go on from here, I want to describe how I expect my quadcopter to func
 
 One easy and clean way to keep track of orientation is simply using the accelerometer; we know which direction is down and so we can easily isolate the roll and pitch axes. This is a very crude method for tracking two axes from the output of a 3-axis sensor, but it provides me with a good enough measurement to use for starting up PID motor control (for the moment)
 
+## The Troubles...
 
+So, I had a nice setup for testing the PID algorithm. Motors mounted to a wooden slat with a gyroscope in the middle, and I implemented the proportional response to the error off a zero degree setpoint, with a gain of roughly 1.5. As expected, whenever the roll angle was off by 25 degrees, the control loop added back 25 * 1.5 = 37.5 to the lower motor, and removed 37.5 from the signal to the motor at a higher elevation. Then, I added the integral counter and the derivative response to the movement of the wooden slat on the swivel; but I had a problem. My roll and pitch were calculated using an accelerometer, which meant that any accelerations due to vibrations (such as by motors attached to the same object on which the gyroscope is mounted) would be added into the roll/pitch calculations. As you can see in the next picture, the roll and pitch values when the quad sat on top of a box fan are very, VERY noisy and vary between -3 and -9 degrees. 
+
+<img src="pictures\rollPitchNoisy.JPG" style="zoom: 25%; float: left;" />
+
+That means that due to those vibrations, the quad thinks it is oscillating between -3 and -9 degrees, and feeding that error into the PID algorithm. The derivative response is responding directly to the speed of the movement of the roll value. If this value flucatuates in this manner, the quad will spin out of control completely. In order to fix this, I spent time googling and found a few ways of including the gyroscope values along with the accelerometer. A gyroscope is very good at measuring angular momentum in short time frames, but it tends to drift from its true value over time. On the other hand, an accelerometer will be very stable over time, but it's quite sensitive to small fluctuations as we've seen already. Essentially, by combining the two using a complementary filter (the two are combined with a moving average summed to 1). The gyroscope takes precedence over the accelerometer in this, because it is more stable in the short term; we are keeping a counter of how far the quad has travelled using the gyroscopes degrees/second measurement, dividing it by the clock frequency (250 khz) to act as an integrator. Then, this is combined with the roll and pitch derived from the accelerometer using some trig functions I stole from Wikipedia! 
+
+After I combined these two sets of roll and pitch values and placed the quad back on the fan, the roll and pitch values were incredibly more stable! The quad was resting at a slight angle, so the recorded values of -3 and -6 are fairly accurate! Check it out!
+
+<img src="pictures\IMUstabilized.JPG" style="zoom: 25%; float: left;" />
 
 # Resources
 
