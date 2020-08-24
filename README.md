@@ -78,7 +78,11 @@ That means that due to those vibrations, the quad thinks it is oscillating betwe
 
 After I combined these two sets of roll and pitch values and placed the quad back on the fan, the roll and pitch values were incredibly more stable! The quad was resting at a slight angle, so the recorded values of -3 and -6 are fairly accurate! Check it out!
 
-<img src="pictures\IMUstabilized.JPG" style="zoom: 25%; float: left;" />
+<img src="pictures\IMUstabilized.JPG" style="float: left;" />
+
+So, After that, I was ready to go! Well, no, I accidentally shorted the serial data and clock lines on my Arduino board. I didn't realize it at first, so I figured out how to upload compiled Intel HEX files directly onto the Atmega Microchip's flash memory using a Raspberry Pi tied directly into the in-circuit serial programming pins on the Arduino board. I felt pretty sweet; I had figured out the clock and data lines were bad, I uploaded hex-code onto a chip, I ordered a new Arduino and was ready to go!
+
+I continued to use avrdude to program the new Arduino board I had received and was getting things to work; test programs ran well and I/O was working. However, I still couldn't upload over serial... Remember how I was uploading programs directly into flash? Well, Atmega chips have a bootloader - a program placed in a special part of flash memory - that receives data from the Arduino's serial bus on the USB-B port. I had overwritten it, and so I couldn't upload via serial, and communicating over Serial didn't seem to be working either...
 
 # Resources
 
