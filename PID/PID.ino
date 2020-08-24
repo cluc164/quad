@@ -1,12 +1,15 @@
 #include <Wire.h>
 
 const int MPU = 0x68;
+const int I2C_CLOCK = 250;
 
 /* PID CONSTANTS */
 float p_roll_gain = 1.4;
-float i_roll_gain = 0.0;
-float d_roll_gain = 0.0;
+float i_roll_gain = 0.1;
+float d_roll_gain = 1.0;
 /* END PID CONSTANTS */
+
+float max_roll_correct = 300.0;
 
 const float ACCEL_SENSITIVITY = 8192.0;
 const float GYRO_SENSITIVITY = 65.5;
@@ -19,6 +22,7 @@ float acc[3];
 float gyro[3];
 float gyroCal[3];
 
+float roll_acc, pitch_acc;
 float roll, pitch, yaw;
 float roll_set, pitch_set;
 
@@ -29,6 +33,7 @@ int ch3_state;
 int throttle_pulse;
 
 int throttle_1_pulse, throttle_2_pulse;
+float roll_error, running_error, prev_error;
 float pid_roll;
 
 void setup() {
@@ -42,13 +47,12 @@ void setup() {
   PCMSK0 |= (1 << PCINT2);  // trigger ISR on PCINT2 (digital pin 10) state change
   
   while (ch3 < 1000) {
-    blinkLED(200);
-    // pulseESC();
+    // blinkLED(200);
   }
   
   Serial.begin(9600);
-  Wire.setClock(250);
   
+  TWBR = 12;
   Wire.begin();
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
@@ -75,19 +79,35 @@ void setup() {
 
 void loop() {
   read_mpu_data();
+  pitch += gyro[1] / I2C_CLOCK;
+  roll += gyro[0] / I2C_CLOCK;
+
+  pitch_acc = atan2(-acc[0], sqrt(acc[1]*acc[1] + acc[2]*acc[2])) * 180/M_PI;
+  roll_acc = atan2(acc[1], acc[2]) * 180/M_PI;
+  
+  pitch = pitch * 0.96 + pitch_acc * 0.04;
+  roll = roll * 0.96 + roll_acc * 0.04;
   
   // ensure that the throttle pulse is between 1000-1900, and don't use ch3 as it's being written to by the ISR
   throttle_pulse = ch3;
-  if (throttle_pulse < 1000) {
-    throttle_pulse = 1000;
-  } else if (throttle_pulse > 1900) {
-    throttle_pulse = 1900;
-  }
 
   calculate_pid_values();
 
-  throttle_1_pulse = throttle_pulse + pid_roll;
-  throttle_2_pulse = throttle_pulse - pid_roll;
+  throttle_1_pulse = throttle_pulse - pid_roll;
+  throttle_2_pulse = throttle_pulse + pid_roll;
+
+  if (throttle_1_pulse < 1000) {
+    throttle_1_pulse = 1000;
+  } else if (throttle_1_pulse > 1900) {
+    throttle_1_pulse = 1900;
+  }
+
+  if (throttle_2_pulse < 1000) {
+    throttle_2_pulse = 1000;
+  } else if (throttle_2_pulse > 1900) {
+    throttle_2_pulse = 1900;
+  }
+//  
 //  Serial.print(throttle_1_pulse);
 //  Serial.print("\t");
 //  Serial.println(throttle_2_pulse);  
@@ -114,12 +134,10 @@ void loop() {
       PORTD &= 0b00010000; 
     }
   }
-  
-  roll = atan2(acc[1], acc[2]) * 180/M_PI;
-  pitch = atan2(-acc[0], sqrt(acc[1]*acc[1] + acc[2]*acc[2])) * 180/M_PI;
-//  Serial.print(roll);
-//  Serial.print("\t");
-//  Serial.println(pitch);
+//  
+  Serial.print(roll);
+  Serial.print("\t");
+  Serial.println(pitch);
 }
 
 ISR(PCINT0_vect) {
@@ -184,9 +202,14 @@ void calibrate_gyro() {
 }
 
 void calculate_pid_values() {
-  float roll_error = roll_set - roll;
+  roll_error = roll - roll_set;
+  running_error += roll_error * i_roll_gain;
+  pid_roll = p_roll_gain * roll_error + running_error + d_roll_gain * (roll_error - prev_error);
+  prev_error = roll_error;
 
-  pid_roll = p_roll_gain * roll_error;
-
-  Serial.println(pid_roll);
+  if (pid_roll > max_roll_correct) {
+    pid_roll = max_roll_correct;
+  } else if (pid_roll < -1 * max_roll_correct) {
+    pid_roll = -1 * max_roll_correct;
+  }
 }
