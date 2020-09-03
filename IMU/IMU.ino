@@ -20,28 +20,56 @@ float roll, pitch;
 unsigned long timer;
 
 void setup() {
-  Serial.begin(115200);
-  
-  Wire.begin();
+  digitalWrite(SDA, 1);
+  digitalWrite(SCL, 1);
+  DDRB |= 0b00010000; // pins 8-11 set to input, 12 is output
+  // Serial.begin(115200);
+  for (int i = 0; i < 5; ++i) {
+    digitalWrite(12, HIGH);
+    delay(200);
+    digitalWrite(12, LOW);
+    delay(200);
+  }
+  delay(1000);
   TWBR = 12; // Setting the clock to 250 hz
-  Wire.beginTransmission(MPU);
+  Wire.begin();
+  Wire.beginTransmission(0x68);
   Wire.write(0x6B);
   Wire.write(0x00);
-  Wire.endTransmission(true);
-
+  Wire.endTransmission(false);
+  for (int i = 0; i < 4; ++i) {
+    digitalWrite(12, HIGH);
+    delay(200);
+    digitalWrite(12, LOW);
+    delay(200);
+  }
+  delay(1000);
   // Configure MPU to use +500 deg/seconds for the gyroscope sensitivity and +4g for accelerometer
   Wire.beginTransmission(MPU);
   Wire.write(0x1C);                 
   Wire.write(0b00001000);
   Wire.endTransmission(true);
-  
+  for (int i = 0; i < 3; ++i) {
+    digitalWrite(12, HIGH);
+    delay(200);
+    digitalWrite(12, LOW);
+    delay(200);
+  }
+  delay(1000);
   Wire.beginTransmission(MPU);
   Wire.write(0x1B);                   
   Wire.write(0b00001000);               
   Wire.endTransmission(true);
-  
+  for (int i = 0; i < 2; ++i) {
+    digitalWrite(12, HIGH);
+    delay(200);
+    digitalWrite(12, LOW);
+    delay(200);
+  }
   calibrate_gyro();
+  delay(1000);
   timer = micros();
+  digitalWrite(12, HIGH);
 }
 
 void loop() {
@@ -64,9 +92,9 @@ void loop() {
   // In order for our loop to properly track the travelled roll/pitch angles, we need to ensure that our loop take precisely 4000 microseconds. By doing this, we
   // can use a fixed variable for our time step when using the gyro to find roll/pitch
   while(micros() - timer < 4000); 
-  Serial.print(pitch);
-  Serial.print("\t");
-  Serial.println(roll);
+  // Serial.print(pitch);
+  // Serial.print("\t");
+  // Serial.println(roll);
   timer = micros();
 }
 
