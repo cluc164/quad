@@ -71,7 +71,7 @@ void setup() {
   }
   
   Serial.begin(9600);
-
+  
   TWBR = 12;
   Wire.begin();
   Wire.beginTransmission(MPU);
@@ -159,13 +159,13 @@ void loop() {
       blinkLED(200);
     }
   }  
+
   // Calculate the start and end times of the pulse
   motor_start = micros();
   motor_1_end = motor_start + throttle_1_pulse;
   motor_2_end = motor_start + throttle_2_pulse;
   motor_3_end = motor_start + throttle_3_pulse;
   motor_4_end = motor_start + throttle_4_pulse;  
-
  
   // Set pin 4-7 to HIGH to start the pulse
   PORTD |= 0b11110000;
@@ -320,7 +320,7 @@ void calculate_pid_values() {
   pid_roll = p_roll_gain * roll_error + running_roll_error + d_roll_gain * (roll_error - prev_roll_error);
   prev_roll_error = roll_error;
   
-  // Trim the PID value so as to not overcorrect;
+  // Trim the PID value so as to not overcorrect
   if (pid_roll > max_roll_correct) {
     pid_roll = max_roll_correct;
   } else if (pid_roll < -1 * max_roll_correct) {
